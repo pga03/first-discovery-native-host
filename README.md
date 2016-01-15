@@ -1,1 +1,5 @@
 # first-discovery-native-host
+
+##WORK IN PROGRESS.
+##PATHS NOT CORRECT
+##EXTENSION NEEDS CHANGED TOO
