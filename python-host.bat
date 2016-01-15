@@ -1,3 +1,3 @@
 @echo off
-REM ======PYTHON NATIVE======
-python "python-native-messaging-example-host" %*
+
+python "%~dp0/python-host" %*

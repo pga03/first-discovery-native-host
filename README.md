@@ -14,8 +14,6 @@ com.ibm.firstdiscovery.json can be relative to the file's location)
 
 2. Run install-host.bat
 
-
-
 ####Usage:
 Go to chrome-extension://fojfkfdnipccdhhjakieojkglomfaloe/index.html and http://extension-demo-jtworkme.mybluemix.net/
 

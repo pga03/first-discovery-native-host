@@ -1,11 +1,6 @@
-#!/usr/local/bin/node
-
-// Might be good to use an explicit path to node on the shebang line in case
-// it isn't in PATH when launched by Chrome.
-
 var fs = require('fs');
 
-var nativeMessage = require('../index');
+var nativeMessage = require('./index');
 
 var input = new nativeMessage.Input();
 var transform = new nativeMessage.Transform(messageHandler);

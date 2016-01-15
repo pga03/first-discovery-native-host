@@ -1,6 +1,6 @@
 {
   "name": "com.ibm.firstdiscovery",
-  "description": "My Application",
+  "description": "Native host for First Discovery Extension (https://github.com/pga03/extension-chrome-windows)",
   "path": "host.bat",
   "type": "stdio",
   "allowed_origins": [
