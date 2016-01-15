@@ -1,5 +1,10 @@
 # first-discovery-native-host
 
+####Before We Begin:
+It's a good idea to read up on Chrome's messaging (native and non-native).
+https://developer.chrome.com/extensions/messaging
+https://developer.chrome.com/extensions/nativeMessaging
+
 ####Installation:
 1. Because of hardcoded paths required in the registry, make sure the repo is cloned to
 **C:\Users\IBM_ADMIN\projects\first-discovery-native-host**. Hardcoded paths in
