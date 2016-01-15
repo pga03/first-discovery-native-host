@@ -1,7 +1,7 @@
 {
   "name": "com.ibm.firstdiscovery",
   "description": "My Application",
-  "path": "C:\\Users\\IBM_ADMIN\\projects\\extension-chrome-windows\\host.bat",
+  "path": "C:\\Users\\IBM_ADMIN\\projects\\first-discovery-native-host\\host.bat",
   "type": "stdio",
   "allowed_origins": [
     "chrome-extension://fojfkfdnipccdhhjakieojkglomfaloe/"
