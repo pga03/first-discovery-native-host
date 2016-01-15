@@ -1,3 +1,3 @@
-REM @echo off
+@echo off
 REM ======PYTHON NATIVE======
-REM python "C:\Users\IBM_ADMIN\projects\extension-chrome-windows\python-native-messaging-example-host" %*
+python "C:\Users\IBM_ADMIN\projects\first-discovery-native-host\python-native-messaging-example-host" %*
