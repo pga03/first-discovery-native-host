@@ -1,12 +1,11 @@
 # first-discovery-native-host
 
-###WORK IN PROGRESS.
-###PATHS NOT CORRECT
-###ONLY THE PYTHON HOST WORKS
-###EXTENSION NEEDS CHANGED TOO
-
-###Install notes
-Because of hardcoded paths, make sure the repo is cloned to
+####Installation:
+-Because of hardcoded paths, make sure the repo is cloned to
 **C:\Users\IBM_ADMIN\projects\first-discovery-native-host**
+
+-Only the python host works as of now. To use it change the "path" value in
+com.ibm.firstdiscovery.json to point to **python-host.bat** instead of
+**host.bat**
 
 
