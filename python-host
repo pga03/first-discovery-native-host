@@ -10,6 +10,7 @@ import struct
 import sys
 import threading
 import Queue
+import os.path
 
 try:
   import Tkinter
@@ -56,8 +57,16 @@ def read_thread_func(queue):
       # In headless mode just send an echo message back.
       send_message('{"echo": %s}' % text)
 
+def write_file(message):
+  prefsFile=open('E:\prefs.txt', 'w+')
+  prefsFile.write(message)
+  prefsFile.close()
+
+  self.writeFile()
+
 if Tkinter:
   class NativeMessagingWindow(Tkinter.Frame):
+    #write_file = func
     def __init__(self, queue):
       self.queue = queue
 
@@ -84,6 +93,13 @@ if Tkinter:
           self.quit()
           return
         self.log("Received %s" % message)
+        self.log("trying to write file")
+        prefsFile=open('E:\prefs.txt', 'w+')
+        prefsFile.write(message)
+        prefsFile.close()
+
+        self.log("File written (hopefully)")
+        #write_file(message)
 
       self.after(100, self.processMessages)
 
@@ -101,6 +117,9 @@ if Tkinter:
       self.text.config(state=Tkinter.NORMAL)
       self.text.insert(Tkinter.END, message + "\n")
       self.text.config(state=Tkinter.DISABLED)
+
+    def writeFile():
+      self.log("in writeFile")
 
 
 def Main():
