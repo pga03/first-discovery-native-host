@@ -2,6 +2,7 @@ var fs = require('fs');
 
 var nativeMessage = require('./index');
 
+
 var input = new nativeMessage.Input();
 var transform = new nativeMessage.Transform(messageHandler);
 var output = new nativeMessage.Output();
@@ -51,4 +52,15 @@ function messageHandler(msg, push, done) {
         push(msg);
         done();
     }
+}
+
+function writeMessageToFile(message){
+  fs.writeFile("C:\\Users\\IBM_ADMIN\\projects\\node-host-log.txt", message,
+      function(err) {
+        if(err) {
+         return console.log(err);
+      }
+
+      console.log("The file was saved!");
+  })
 }
