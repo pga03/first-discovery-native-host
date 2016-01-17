@@ -27,31 +27,7 @@ input.on('end', function() {
 });
 
 function messageHandler(msg, push, done) {
-    if (msg.readdir) {
-        fs.readdir(msg.readdir, function(err, files) {
-            if (err) {
-                push({ error: err.message || err });
-            } else {
-                files.forEach(function(file) {
-                    push({ file: file });
-                });
-            }
-
-            done();
-        });
-    } else if (msg.subscribe) {
-        subscriptions[msg.subscribe] = true;
-        push({ subscribed: msg.subscribe });
-        done();
-    } else if (msg.unsubscribe) {
-        delete subscriptions[msg.unsubscribe];
-        push({ unsubscribed: msg.unsubscribe });
-        done();
-    } else {
-        // Just echo the message:
-        push(msg);
-        done();
-    }
+  writeMessageToFile(msg);
 }
 
 function writeMessageToFile(message){

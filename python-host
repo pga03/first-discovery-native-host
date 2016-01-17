@@ -11,6 +11,7 @@ import sys
 import threading
 import Queue
 import os.path
+import json
 
 try:
   import Tkinter
@@ -24,14 +25,6 @@ if sys.platform == "win32":
   import os, msvcrt
   msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
   msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
-
-# Helper function that sends a message to the webapp.
-def send_message(message):
-   # Write message size.
-  sys.stdout.write(struct.pack('I', len(message)))
-  # Write the message itself.
-  sys.stdout.write(message)
-  sys.stdout.flush()
 
 # Thread that reads messages from the webapp.
 def read_thread_func(queue):
@@ -57,6 +50,14 @@ def read_thread_func(queue):
       # In headless mode just send an echo message back.
       send_message('{"echo": %s}' % text)
 
+# Helper function that sends a message to the webapp.
+def send_message(message):
+   # Write message size.
+  sys.stdout.write(struct.pack('I', len(message)))
+  # Write the message itself.
+  sys.stdout.write(message)
+  sys.stdout.flush()
+
 
 if Tkinter:
   class NativeMessagingWindow(Tkinter.Frame):
@@ -69,7 +70,7 @@ if Tkinter:
 
       self.text = Tkinter.Text(self)
       self.text.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
-      self.text.config(state=Tkinter.DISABLED, height=10, width=40)
+      self.text.config(state=Tkinter.DISABLED, height=30, width=75)
 
       self.messageContent = Tkinter.StringVar()
       self.sendEntry = Tkinter.Entry(self, textvariable=self.messageContent)
@@ -86,13 +87,65 @@ if Tkinter:
         if message == None:
           self.quit()
           return
-        self.log("Received %s" % message)
-        self.log("trying to write file")
-
-        self.writeFile(message)
-        self.log("File written (hopefully)")
+        #self.log("DBG: Received %s" % message)
+        self.log("DBG: Got message!")
+        self.log("DBG: trying to write files")
+        self.parseAndAct(message)
 
       self.after(100, self.processMessages)
+
+    #TODO: find a better way to get device paths
+    def parseAndAct(self, message):
+      #Turn message string to json object
+      jMessage = json.loads(message)
+
+      #Extract values from message
+      messageType   = jMessage["message_type"]
+      userToken     = jMessage["message_body"]["userToken"]
+      preferences   = jMessage["message_body"]["preferences"]
+
+      #Follow instructions in message, get isSuccessful boolean
+      if messageType == "write_usb":
+        self.writeFile(preferences, userToken)
+
+      isSuccessful = True
+      self.sendResponse(isSuccessful, message)
+
+    #TODO: Implement error codes
+    def sendResponse(self, isSuccessful, message):
+      self.log("DBG: in sendResponse")
+      responseSkeleton = json.dumps({ "is_successful" : "", "original_message" : "",
+        "error": {"code" : "", "message": ""}})
+
+      response = json.loads(responseSkeleton)
+
+      if isSuccessful == True:
+        response["is_successful"] = "true"
+
+      if isSuccessful == False:
+        response["is_successful"] = "false"
+
+      response["original_message"] = json.loads(message)
+      response["error"]["code"] = '00000'
+      response["error"]["message"] = "No error!"
+
+      self.log("DBG: MESSAGE TO RESPOND WITH:")
+      self.log(json.dumps(response))
+
+      send_message(json.dumps(response))
+
+    def writeFile(self, preferences, userToken):
+      self.log("DBG: Writing preferences...")
+      prefsFile=open('E:\.first-discovery-preferences.txt', 'w+')
+      prefsFile.write(json.dumps(preferences))
+      prefsFile.close()
+      self.log("DBG: Preferences written")
+
+      self.log("DBG: Writing token...")
+      tokenFile=open('E:\.gpii-user-token.txt', 'w+')
+      tokenFile.write(json.dumps(userToken))
+      tokenFile.close()
+      self.log("DBG: Token written")
 
     def onSend(self):
       text = '{"text": "' + self.messageContent.get() + '"}'
@@ -109,12 +162,6 @@ if Tkinter:
       self.text.insert(Tkinter.END, message + "\n")
       self.text.config(state=Tkinter.DISABLED)
 
-    def writeFile(self, message):
-      print "in writeFile()"
-      #This will eventually be replaced with a USB path
-      prefsFile=open('C:\Users\IBM_ADMIN\projects\python-log.txt', 'w+')
-      prefsFile.write(message)
-      prefsFile.close()
 
 def Main():
   if not Tkinter:

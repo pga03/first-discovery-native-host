@@ -19,7 +19,6 @@ Go to chrome-extension://fojfkfdnipccdhhjakieojkglomfaloe/index.html and http://
 
 Once on the pages, you can try sending messages.
 
-######**Heads Up:**
--Only the python host works as of now. To use it change the "path" value in
-com.ibm.firstdiscovery.json to point to **python-host.bat** instead of
-**host.bat**
+#####**Heads Up:**
+-Only the python host works as of now. Because of this, Python 2.7 is a
+dependency.
