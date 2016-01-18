@@ -1,5 +1,5 @@
 {
-  "name": "com.ibm.firstdiscovery",
+  "name": "First Discovery Native Module",
   "description": "Native host for First Discovery Extension (https://github.com/pga03/extension-chrome-windows)",
   "path": "python-host.bat",
   "type": "stdio",
