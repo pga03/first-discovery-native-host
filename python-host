@@ -1,23 +1,14 @@
-#!/usr/bin/env python
-# Copyright (c) 2012 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
-
-# A simple native messaging host. Shows a Tkinter dialog with incoming messages
-# that also allows to send message back to the webapp.
-
 import struct
 import sys
 import threading
 import Queue
 import os.path
 import json
+from time import gmtime, strftime
+import time
 
-try:
-  import Tkinter
-  import tkMessageBox
-except ImportError:
-  Tkinter = None
+isLogging = False
+logPath = 'C:\Users\IBM_ADMIN\projects\pythonLog.txt'
 
 # On Windows, the default I/O mode is O_TEXT. Set this to O_BINARY
 # to avoid unwanted modifications of the input/output streams.
@@ -59,82 +50,65 @@ def send_message(message):
   sys.stdout.flush()
 
 
-if Tkinter:
-  class NativeMessagingWindow(Tkinter.Frame):
-    #write_file = func
-    def __init__(self, queue):
-      self.queue = queue
+class NativeMessagingWindow():
+  def __init__(self, queue):
+    self.queue = queue
+    #Main loop
+    while 1:
+      time.sleep(0.1)
+      self.processMessages()
 
-      Tkinter.Frame.__init__(self)
-      self.pack()
+  def processMessages(self):
+    while not self.queue.empty():
+      message = self.queue.get_nowait()
+      if message == None:
+        self.quit()
+        return
+      self.log("DBG: Got message!")
+      self.log("DBG: trying to write files")
+      self.parseAndAct(message)
 
-      self.text = Tkinter.Text(self)
-      self.text.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
-      self.text.config(state=Tkinter.DISABLED, height=30, width=75)
+  #TODO: find a better way to get device paths
+  def parseAndAct(self, message):
+    #Turn message string to json object
+    jMessage = json.loads(message)
 
-      self.messageContent = Tkinter.StringVar()
-      self.sendEntry = Tkinter.Entry(self, textvariable=self.messageContent)
-      self.sendEntry.grid(row=1, column=0, padx=10, pady=10)
+    #Extract values from message
+    messageType   = jMessage["message_type"]
+    userToken     = jMessage["message_body"]["userToken"]
+    preferences   = jMessage["message_body"]["preferences"]
 
-      self.sendButton = Tkinter.Button(self, text="Send", command=self.onSend)
-      self.sendButton.grid(row=1, column=1, padx=10, pady=10)
+    #Follow instructions in message, get isSuccessful boolean
+    if messageType == "write_usb":
+      self.writeFileAndRespond(preferences, userToken, message)
 
-      self.after(100, self.processMessages)
 
-    def processMessages(self):
-      while not self.queue.empty():
-        message = self.queue.get_nowait()
-        if message == None:
-          self.quit()
-          return
-        #self.log("DBG: Received %s" % message)
-        self.log("DBG: Got message!")
-        self.log("DBG: trying to write files")
-        self.parseAndAct(message)
+  #TODO: Implement error codes
+  def sendResponse(self, isSuccessful, errorMessage, message):
+    self.log("DBG: in sendResponse")
+    responseSkeleton = json.dumps({ "is_successful" : "", "original_message" : "",
+      "error": {"code" : "", "message": ""}})
 
-      self.after(100, self.processMessages)
+    response = json.loads(responseSkeleton)
 
-    #TODO: find a better way to get device paths
-    def parseAndAct(self, message):
-      #Turn message string to json object
-      jMessage = json.loads(message)
+    if isSuccessful == True:
+      response["is_successful"] = "true"
 
-      #Extract values from message
-      messageType   = jMessage["message_type"]
-      userToken     = jMessage["message_body"]["userToken"]
-      preferences   = jMessage["message_body"]["preferences"]
+    if isSuccessful == False:
+      response["is_successful"] = "false"
 
-      #Follow instructions in message, get isSuccessful boolean
-      if messageType == "write_usb":
-        self.writeFile(preferences, userToken)
+    response["original_message"] = json.loads(message)
+    response["error"]["code"] = '00000'
+    response["error"]["message"] = errorMessage
 
-      isSuccessful = True
-      self.sendResponse(isSuccessful, message)
+    self.log("DBG: MESSAGE TO RESPOND WITH:")
+    self.log(json.dumps(response))
 
-    #TODO: Implement error codes
-    def sendResponse(self, isSuccessful, message):
-      self.log("DBG: in sendResponse")
-      responseSkeleton = json.dumps({ "is_successful" : "", "original_message" : "",
-        "error": {"code" : "", "message": ""}})
+    send_message(json.dumps(response))
 
-      response = json.loads(responseSkeleton)
-
-      if isSuccessful == True:
-        response["is_successful"] = "true"
-
-      if isSuccessful == False:
-        response["is_successful"] = "false"
-
-      response["original_message"] = json.loads(message)
-      response["error"]["code"] = '00000'
-      response["error"]["message"] = "No error!"
-
-      self.log("DBG: MESSAGE TO RESPOND WITH:")
-      self.log(json.dumps(response))
-
-      send_message(json.dumps(response))
-
-    def writeFile(self, preferences, userToken):
+  def writeFileAndRespond(self, preferences, userToken, message):
+    self.log("DBG: Attempting to write to E:")
+    try:
       self.log("DBG: Writing preferences...")
       prefsFile=open('E:\.first-discovery-preferences.txt', 'w+')
       prefsFile.write(json.dumps(preferences))
@@ -146,43 +120,26 @@ if Tkinter:
       tokenFile.write(json.dumps(userToken))
       tokenFile.close()
       self.log("DBG: Token written")
+      self.sendResponse(True, "no error", message)
 
-    def onSend(self):
-      text = '{"text": "' + self.messageContent.get() + '"}'
-      self.log('Sending %s' % text)
-      try:
-        send_message(text)
-      except IOError:
-        tkMessageBox.showinfo('Native Messaging Example',
-                              'Failed to send message.')
-        sys.exit(1)
+    except IOError as e:
+      self.log("ERROR: Error writing to file. Do you have access to E:?")
+      self.sendResponse(False, "FileIO Error",  message)
 
-    def log(self, message):
-      self.text.config(state=Tkinter.NORMAL)
-      self.text.insert(Tkinter.END, message + "\n")
-      self.text.config(state=Tkinter.DISABLED)
-
+  #Set isLogging to True to enable
+  def log(self, message):
+    if isLogging == True:
+      with open(logPath, 'a') as logFile:
+        logFile.write(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + " " + message + "\n")
 
 def Main():
-  if not Tkinter:
-    send_message('"Tkinter python module wasn\'t found. Running in headless ' +
-                 'mode. Please consider installing Tkinter."')
-    read_thread_func(None)
-    sys.exit(0)
-
   queue = Queue.Queue()
-
-  main_window = NativeMessagingWindow(queue)
-  main_window.master.title('Native Messaging Example')
-
   thread = threading.Thread(target=read_thread_func, args=(queue,))
   thread.daemon = True
   thread.start()
 
-  main_window.mainloop()
-
+  messager = NativeMessagingWindow(queue)
   sys.exit(0)
-
 
 if __name__ == '__main__':
   Main()

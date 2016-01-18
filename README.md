@@ -29,5 +29,9 @@ populated in the textbox
 -Only the python host works as of now. Because of this, Python 2.7 is a
 dependency.
 
+-python-host has logging turned off by default. Use isLogging = True to enable
+(keep in mind the log path)
+
 -The host assumes a drive is attached to E:. which is where is token and
 preferences files are written to
+
