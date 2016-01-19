@@ -86,8 +86,8 @@ class NativeMessagingWindow():
   #TODO: Implement error codes
   def sendResponse(self, isSuccessful, errorMessage, message):
     self.log("DBG: in sendResponse")
-    responseSkeleton = json.dumps({ "is_successful" : "", "original_message" : "",
-      "error": {"code" : "", "message": ""}})
+    responseSkeleton = json.dumps({ "is_successful" : "",
+      "original_message" : "", "error": {"code" : "", "message": ""}})
 
     response = json.loads(responseSkeleton)
 
@@ -117,7 +117,7 @@ class NativeMessagingWindow():
 
       self.log("DBG: Writing token...")
       tokenFile=open('E:\.gpii-user-token.txt', 'w+')
-      tokenFile.write(json.dumps(userToken))
+      tokenFile.write(json.dumps(userToken).strip('"'))
       tokenFile.close()
       self.log("DBG: Token written")
       self.sendResponse(True, "no error", message)
@@ -130,7 +130,8 @@ class NativeMessagingWindow():
   def log(self, message):
     if isLogging == True:
       with open(logPath, 'a') as logFile:
-        logFile.write(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + " " + message + "\n")
+        logFile.write(strftime(
+          "%Y-%m-%d %H:%M:%S", gmtime()) + " " + message + "\n")
 
 def Main():
   queue = Queue.Queue()
