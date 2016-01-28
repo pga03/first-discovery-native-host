@@ -12,6 +12,7 @@ via a Chrome extension, and this host in turn creates two files:
 
 See these links for additional information on Chrome's messaging capabilities:
 https://developer.chrome.com/extensions/messaging
+
 https://developer.chrome.com/extensions/nativeMessaging
 
 ####Installation
@@ -35,6 +36,8 @@ Note: The install removes any previous versions and registry keys, and can be re
 
 #####Dependencies
 1. Python 2.7.x is installed and available on the PATH
+https://www.python.org/downloads/windows/
+
 2. This is intended to run on Windows 7
 
 ####Uninstall
@@ -52,5 +55,5 @@ are written to `C:\Program Files (x86)\First-Discovery-Chrome-Extension`
 
 #####USB Drive Path
 This assumes a USB key will be mounted at the `E:\ drive`. Edit python-host and set the paths for you
-use as needed. You might need to edit this if you have additonal disc drives, disks, or network drives
+use as needed. You might need to edit this if you have additional disc drives, disks, or network drives
 mapped on your machine.
