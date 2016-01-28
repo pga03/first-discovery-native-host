@@ -36,6 +36,7 @@ Note: The install removes any previous versions and registry keys, and can be re
 
 #####Dependencies
 1. Python 2.7.x is installed and available on the PATH
+
 https://www.python.org/downloads/windows/
 
 2. This is intended to run on Windows 7
