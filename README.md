@@ -10,6 +10,7 @@ via a Chrome extension, and this host in turn creates two files:
 
 
 This repository is not useful by itself. It should be used with its companion browser extension and a first discovery server.
+
 1. https://github.com/pga03/extension-chrome-windows
 2. https://github.com/pga03/first-discovery-server
 
