@@ -11,34 +11,27 @@ via a Chrome extension, and this host in turn creates two files:
 ####Messaging background
 
 See these links for additional information on Chrome's messaging capabilities:
-https://developer.chrome.com/extensions/messaging
-
-https://developer.chrome.com/extensions/nativeMessaging
+1. https://developer.chrome.com/extensions/messaging
+2. https://developer.chrome.com/extensions/nativeMessaging
 
 ####Installation
 1. Install the Chrome extension (https://github.com/pga03/extension-chrome-windows) and obtain
 the Chrome extension ID (it can occasionally change when installed in development mode). You will use 
 this extension ID in step 3.
-
 2. Download this repository and unzip if necessary.
-
 3. Add your Chrome extension id obtained in step 1 to the `allowed_origins` array in the `com.ibm.firstdiscovery.json` file. 
-
 4. Run `install-host.bat` as an administrator.
 
 ##### What does the installation process do?
 1. Creates a folder at `C:\Program Files (x86)\First-Discovery-Chrome-Extension`
-2. Copies this repositories contents to it
+2. Copies the downloaded contents of this repository to it
 3. Sets a registry setting so Chrome can find the native messaging host
 
 Note: The install removes any previous versions and registry keys, and can be re-run without first uninstalling. 
 
 
 #####Dependencies
-1. Python 2.7.x is installed and available on the PATH
-
-https://www.python.org/downloads/windows/
-
+1. Python 2.7.x is installed and available on the PATH (https://www.python.org/downloads/windows/)
 2. This is intended to run on Windows 7
 
 ####Uninstall
@@ -58,3 +51,6 @@ are written to `C:\Program Files (x86)\First-Discovery-Chrome-Extension`
 This assumes a USB key will be mounted at the `E:\ drive`. Edit python-host and set the paths for you
 use as needed. You might need to edit this if you have additional disc drives, disks, or network drives
 mapped on your machine.
+
+#####Registry setting
+The registry entry used is located at `HKCU\Software\Google\Chrome\NativeMessagingHosts`  
