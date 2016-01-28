@@ -8,6 +8,12 @@ via a Chrome extension, and this host in turn creates two files:
 1. `.gpii-user-token.txt` - contains the user's token
 2. `.first-discovery-preferences.txt` - contains the user's preference set in JSON
 
+
+This repository is not useful by itself. It should be used with its companion browser extension and a first discovery server.
+1. https://github.com/pga03/extension-chrome-windows
+2. https://github.com/pga03/first-discovery-server
+
+
 ####Messaging background
 
 See these links for additional information on Chrome's messaging capabilities:
