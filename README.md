@@ -30,8 +30,7 @@ this extension ID in step 3.
 2. Copies this repositories contents to it
 3. Sets a registry setting so Chrome can find the native messaging host
 
-Note: The install can be re-run to install a new version without uninstalling. The installer will
-delete existing folder and registry setting.
+Note: The install removes any previous versions and registry keys, and can be re-run without first uninstalling. 
 
 
 #####Dependencies
