@@ -247,7 +247,7 @@ def tests():
 
     # Check if paths are available
     if not os.path.exists(usbDriveLetter):
-        print("FAILURE: No E: drive!")
+        print("FAILURE: usb Drive wasn't found!")
         testSuccess = False
     if os.path.exists(usbDriveLetter + '\.first-discovery-preferences.txt'):
         print("INFO: preferences file exists. Deleting it...")
