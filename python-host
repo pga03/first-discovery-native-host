@@ -8,9 +8,19 @@ import os.path
 import json
 from time import gmtime, strftime
 import time
+from os.path import expanduser
 
 isLogging = False
-logPath = 'C:\Program Files (x86)\First-Discovery-Chrome-Extension\pythonLog.txt'
+isTesting = False
+home = expanduser("~")
+logPath = home + '\pythonLog.txt'
+
+# Check for 'test' command line arg
+for arg in sys.argv:
+    if arg == "test":
+        isLogging = True
+        isTesting = True
+
 
 # On Windows, the default I/O mode is O_TEXT. Set this to O_BINARY
 # to avoid unwanted modifications of the input/output streams.
@@ -23,7 +33,6 @@ if sys.platform == "win32":
 
 # Thread that reads messages from the webapp.
 def read_thread_func(queue):
-    # message_number = 0
     while 1:
         # Read the message length (first 4 bytes).
         text_length_bytes = sys.stdin.read(4)
@@ -41,13 +50,15 @@ def read_thread_func(queue):
 
         if queue:
             queue.put(text)
-        else:
-            # In headless mode just send an echo message back.
-            send_message('{"echo": %s}' % text)
+        # else:
+        #     # In headless mode just send an echo message back.
+        #     send_message('{"echo": %s}' % text)
 
 
-# Helper function that sends a message to the webapp.
+# Helper to send response to extension
 def send_message(message):
+    # if isTesting is True:
+    #     return
     # Write message size.
     sys.stdout.write(struct.pack('I', len(message)))
     # Write the message itself.
@@ -63,17 +74,21 @@ class NativeMessenger():
         while 1:
             time.sleep(0.1)
             self.processMessages()
+            # Break from loop if testing. This way we can work with individual
+            # messages in the NativeMessenger object
+            if isTesting is True:
+                return
 
     def processMessages(self):
         while not self.queue.empty():
             message = self.queue.get_nowait()
-            # if message == None:
             if message is None:
                 self.quit()
                 return
             self.log("DBG: Got message!")
-            self.log("DBG: trying to write files")
-            self.parseAndAct(message)
+
+            if isTesting is False:
+                self.parseAndAct(message)
 
     # TODO: find a better way to get device paths
     def parseAndAct(self, message):
@@ -85,9 +100,13 @@ class NativeMessenger():
         userToken = jMessage["message_body"]["userToken"]
         preferences = jMessage["message_body"]["preferences"]
 
+        if isTesting is True:
+            return(json.dumps(messageType), json.dumps(userToken), json.dumps(preferences))
+
         # Follow instructions in message, get isSuccessful boolean
         if messageType == "write_usb":
-            self.writeFileAndRespond(preferences, userToken, message)
+            if isTesting is False:
+                self.writeFileAndRespond(preferences, userToken, message)
 
     # TODO: Implement error codes
     def sendResponse(self, isSuccessful, errorMessage, message):
@@ -113,8 +132,11 @@ class NativeMessenger():
 
         self.log("DBG: MESSAGE TO RESPOND WITH:")
         self.log(json.dumps(response))
+        if isTesting is True:
+            return json.dumps(response)
 
-        send_message(json.dumps(response))
+        else:
+            send_message(json.dumps(response))
 
     def writeFileAndRespond(self, preferences, userToken, message):
         self.log("DBG: Attempting to write to E:")
@@ -130,7 +152,9 @@ class NativeMessenger():
             tokenFile.write(json.dumps(userToken).strip('"'))
             tokenFile.close()
             self.log("DBG: Token written")
-            self.sendResponse(True, "no error", message)
+
+            if isTesting is False:
+                self.sendResponse(True, "no error", message)
 
         except IOError as e:
             self.log("ERROR: Error writing to file. Do you have access to E:?")
@@ -140,12 +164,122 @@ class NativeMessenger():
     def log(self, message):
         # if isLogging == True:
         if isLogging is True:
-            with open(logPath, 'a') as logFile:
+            with open(logPath, 'a+') as logFile:
                 logFile.write(strftime(
                     "%Y-%m-%d %H:%M:%S", gmtime()) + " " + message + "\n")
 
 
+def tests():
+    testSuccess = True
+    print("\nTESTING: Running tests...\n")
+    print("TESTING: Checking if path to log life exists and is writable")
+    if os.path.exists(home):
+        print("SUCCESS: log path is good!")
+    else:
+        print("FAILURE: log path isn't good")
+        testSuccess = False
+        return
+
+    testMessage = json.dumps(
+        {
+            "message_type": "write_usb",
+            "message_body": {
+                "userToken": "unitTest",
+                "preferences": {
+                    "contexts": {
+                        "gpii-default": {
+                            "name": "unitTest",
+                            "preferences": {
+                                "gpii_firstDiscovery_language": "en-US",
+                                "gpii_firstDiscovery_speak": "true",
+                                    "gpii_firstDiscovery_speechRate": "1.5",
+                                    "fluid_prefs_contrast": "bw",
+                                    "fluid_prefs_textSize": "1.4",
+                                    "gpii_firstDiscovery_onScreenKeyboard": "false",
+                                    "gpii_firstDiscovery_captions": "false",
+                                    "gpii_firstDiscovery_showSounds": "false",
+                                    "gpii_firstDiscovery_stickyKeys": "true"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+    testQueue = Queue.Queue()
+    messenger = NativeMessenger(testQueue)
+
+    # ===== PARSING TESTING ===== #
+    tempPrefs = json.loads(testMessage)
+    # Extract preferences from testMessage
+    goodPrefs = json.dumps(tempPrefs["message_body"]["preferences"])
+
+    messageParts = messenger.parseAndAct(testMessage)
+    messageType = messageParts[0].strip('""')
+    userToken = messageParts[1].strip('""')
+    preferences = messageParts[2]
+
+    # Check if the parsed message parts have the same vaules as testMessage
+    if messageType == "write_usb" and userToken == "unitTest" and preferences == goodPrefs:
+        print("SUCCESS: Parsing was successful")
+    else:
+        print("FAILURE: Parsing was not successful!")
+        testSuccess = False
+
+    # ===== RESPONSE TESTING ===== #
+    response = json.loads(messenger.sendResponse(True, "no error", testMessage))
+    testMessage = json.loads(testMessage)
+    if response["original_message"]["message_body"] != testMessage["message_body"]:
+        print("FAILURE: RESPONSE MESSAGE INCORRECT")
+        testSuccess = False
+    if response["error"]["code"] != '00000':
+        print("FAILURE: RESPONSE MESSAGE INCORRECT")
+        testSuccess = False
+    if response["error"]["message"] != 'no error':
+        print("FAILURE: RESPONSE MESSAGE INCORRECT")
+        testSuccess = False
+    else:
+        print("SUCCESS: Response message was created successfully")
+
+    # ===== TOKEN WRITING TESTING ===== #
+    goodPrefsFile = '{"contexts": {"gpii-default": {"name": "unitTest", "preferences": {"gpii_firstDiscovery_captions": "false", "fluid_prefs_textSize": "1.4", "gpii_firstDiscovery_stickyKeys": "true", "gpii_firstDiscovery_showSounds": "false", "fluid_prefs_contrast": "bw", "gpii_firstDiscovery_speak": "true", "gpii_firstDiscovery_language": "en-US", "gpii_firstDiscovery_onScreenKeyboard": "false", "gpii_firstDiscovery_speechRate": "1.5"}}}}'
+
+    # Check if paths are available
+    if not os.path.exists("E:"):
+        print("FAILURE: No E: drive!")
+        testSuccess = False
+    if os.path.exists('E:\.first-discovery-preferences.txt'):
+        print("INFO: preferences file exists. Deleting it...")
+        os.remove('E:\.first-discovery-preferences.txt')
+    if os.path.exists('E:\.gpii-user-token.txt'):
+        print("INFO: token file exists. Deleting it...")
+        os.remove('E:\.gpii-user-token.txt')
+
+    tempPrefs = testMessage["message_body"]["preferences"]
+    messenger.writeFileAndRespond(tempPrefs, "unitTest", testMessage)
+
+    prefsFile = open('E:\.first-discovery-preferences.txt', 'r').read()
+    tokenFile = open('E:\.gpii-user-token.txt').read()
+
+    # Compare values we want with values we get
+    if prefsFile != goodPrefsFile:
+        print("FAILURE: Prefs file not correctly written")
+        testSuccess = False
+    if tokenFile != 'unitTest':
+        print("FAILURE: Token file not correctly written")
+        testSuccess = False
+    else:
+        print("SUCCESS: Files properly written")
+
+    if testSuccess is False:
+        print("FAILURE: UNIT TESTS FAILED")
+    if testSuccess is True:
+        print("SUCCESS: ALL TESTS RUN SUCCESSFULLY!")
+
+
 def Main():
+    if isTesting is True:
+        tests()
     queue = Queue.Queue()
     thread = threading.Thread(target=read_thread_func, args=(queue,))
     thread.daemon = True
