@@ -259,8 +259,8 @@ def tests():
     tempPrefs = testMessage["message_body"]["preferences"]
     messenger.writeFileAndRespond(tempPrefs, "unitTest", testMessage)
 
-    prefsFile = open('E:\.first-discovery-preferences.txt', 'r').read()
-    tokenFile = open('E:\.gpii-user-token.txt').read()
+    prefsFile = open(usbDriveLetter + '\.first-discovery-preferences.txt', 'r').read()
+    tokenFile = open(usbDriveLetter + '\.gpii-user-token.txt').read()
 
     # Compare values we want with values we get
     if prefsFile != goodPrefsFile:
