@@ -57,9 +57,12 @@ Logging is disabled by default. Edit python-host and set `isLogging` to `True` i
 are written to `C:\Program Files (x86)\First-Discovery-Chrome-Extension`
 
 #####USB Drive Path
-This assumes a USB key will be mounted at the `E:\ drive`. Edit python-host and set the paths for you
-use as needed. You might need to edit this if you have additional disc drives, disks, or network drives
+This assumes a USB key will be mounted at the `E:\ drive`. Edit `python-host` and set `usbDriveLetter`
+as needed. You might need to edit this if you have additional disc drives, disks, or network drives
 mapped on your machine.
 
 #####Registry setting
 The registry entry used is located at `HKCU\Software\Google\Chrome\NativeMessagingHosts`  
+
+####Testing
+Run `python python-host test` to run tests. Output and results will be in the terminal window
