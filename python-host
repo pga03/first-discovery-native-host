@@ -15,134 +15,144 @@ logPath = 'C:\Program Files (x86)\First-Discovery-Chrome-Extension\pythonLog.txt
 # On Windows, the default I/O mode is O_TEXT. Set this to O_BINARY
 # to avoid unwanted modifications of the input/output streams.
 if sys.platform == "win32":
-  import os, msvcrt
-  msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
-  msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+    import os
+    import msvcrt
+    msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
+    msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
 
 # Thread that reads messages from the webapp.
 def read_thread_func(queue):
-  message_number = 0
-  while 1:
-    # Read the message length (first 4 bytes).
-    text_length_bytes = sys.stdin.read(4)
+    # message_number = 0
+    while 1:
+        # Read the message length (first 4 bytes).
+        text_length_bytes = sys.stdin.read(4)
 
-    if len(text_length_bytes) == 0:
-      if queue:
-        queue.put(None)
-      sys.exit(0)
+        if len(text_length_bytes) == 0:
+            if queue:
+                queue.put(None)
+            sys.exit(0)
 
-    # Unpack message length as 4 byte integer.
-    text_length = struct.unpack('i', text_length_bytes)[0]
+        # Unpack message length as 4 byte integer.
+        text_length = struct.unpack('i', text_length_bytes)[0]
 
-    # Read the text (JSON object) of the message.
-    text = sys.stdin.read(text_length).decode('utf-8')
+        # Read the text (JSON object) of the message.
+        text = sys.stdin.read(text_length).decode('utf-8')
 
-    if queue:
-      queue.put(text)
-    else:
-      # In headless mode just send an echo message back.
-      send_message('{"echo": %s}' % text)
+        if queue:
+            queue.put(text)
+        else:
+            # In headless mode just send an echo message back.
+            send_message('{"echo": %s}' % text)
+
 
 # Helper function that sends a message to the webapp.
 def send_message(message):
-   # Write message size.
-  sys.stdout.write(struct.pack('I', len(message)))
-  # Write the message itself.
-  sys.stdout.write(message)
-  sys.stdout.flush()
+    # Write message size.
+    sys.stdout.write(struct.pack('I', len(message)))
+    # Write the message itself.
+    sys.stdout.write(message)
+    sys.stdout.flush()
 
 
-class NativeMessagingWindow():
-  def __init__(self, queue):
-    self.queue = queue
-    #Main loop
-    while 1:
-      time.sleep(0.1)
-      self.processMessages()
+class NativeMessenger():
 
-  def processMessages(self):
-    while not self.queue.empty():
-      message = self.queue.get_nowait()
-      if message == None:
-        self.quit()
-        return
-      self.log("DBG: Got message!")
-      self.log("DBG: trying to write files")
-      self.parseAndAct(message)
+    def __init__(self, queue):
+        self.queue = queue
+        # Main loop
+        while 1:
+            time.sleep(0.1)
+            self.processMessages()
 
-  #TODO: find a better way to get device paths
-  def parseAndAct(self, message):
-    #Turn message string to json object
-    jMessage = json.loads(message)
+    def processMessages(self):
+        while not self.queue.empty():
+            message = self.queue.get_nowait()
+            # if message == None:
+            if message is None:
+                self.quit()
+                return
+            self.log("DBG: Got message!")
+            self.log("DBG: trying to write files")
+            self.parseAndAct(message)
 
-    #Extract values from message
-    messageType   = jMessage["message_type"]
-    userToken     = jMessage["message_body"]["userToken"]
-    preferences   = jMessage["message_body"]["preferences"]
+    # TODO: find a better way to get device paths
+    def parseAndAct(self, message):
+        # Turn message string to json object
+        jMessage = json.loads(message)
 
-    #Follow instructions in message, get isSuccessful boolean
-    if messageType == "write_usb":
-      self.writeFileAndRespond(preferences, userToken, message)
+        # Extract values from message
+        messageType = jMessage["message_type"]
+        userToken = jMessage["message_body"]["userToken"]
+        preferences = jMessage["message_body"]["preferences"]
 
+        # Follow instructions in message, get isSuccessful boolean
+        if messageType == "write_usb":
+            self.writeFileAndRespond(preferences, userToken, message)
 
-  #TODO: Implement error codes
-  def sendResponse(self, isSuccessful, errorMessage, message):
-    self.log("DBG: in sendResponse")
-    responseSkeleton = json.dumps({ "is_successful" : "",
-      "original_message" : "", "error": {"code" : "", "message": ""}})
+    # TODO: Implement error codes
+    def sendResponse(self, isSuccessful, errorMessage, message):
+        self.log("DBG: in sendResponse")
+        responseSkeleton = json.dumps({"is_successful": "",
+                                       "original_message": "",
+                                       "error": {"code": "", "message": ""}
+                                       })
 
-    response = json.loads(responseSkeleton)
+        response = json.loads(responseSkeleton)
 
-    if isSuccessful == True:
-      response["is_successful"] = "true"
+        # if isSuccessful == True:
+        if isSuccessful is True:
+            response["is_successful"] = "true"
 
-    if isSuccessful == False:
-      response["is_successful"] = "false"
+        # if isSuccessful == False:
+        if isSuccessful is False:
+            response["is_successful"] = "false"
 
-    response["original_message"] = json.loads(message)
-    response["error"]["code"] = '00000'
-    response["error"]["message"] = errorMessage
+        response["original_message"] = json.loads(message)
+        response["error"]["code"] = '00000'
+        response["error"]["message"] = errorMessage
 
-    self.log("DBG: MESSAGE TO RESPOND WITH:")
-    self.log(json.dumps(response))
+        self.log("DBG: MESSAGE TO RESPOND WITH:")
+        self.log(json.dumps(response))
 
-    send_message(json.dumps(response))
+        send_message(json.dumps(response))
 
-  def writeFileAndRespond(self, preferences, userToken, message):
-    self.log("DBG: Attempting to write to E:")
-    try:
-      self.log("DBG: Writing preferences...")
-      prefsFile=open('E:\.first-discovery-preferences.txt', 'w+')
-      prefsFile.write(json.dumps(preferences))
-      prefsFile.close()
-      self.log("DBG: Preferences written")
+    def writeFileAndRespond(self, preferences, userToken, message):
+        self.log("DBG: Attempting to write to E:")
+        try:
+            self.log("DBG: Writing preferences...")
+            prefsFile = open('E:\.first-discovery-preferences.txt', 'w+')
+            prefsFile.write(json.dumps(preferences))
+            prefsFile.close()
+            self.log("DBG: Preferences written")
 
-      self.log("DBG: Writing token...")
-      tokenFile=open('E:\.gpii-user-token.txt', 'w+')
-      tokenFile.write(json.dumps(userToken).strip('"'))
-      tokenFile.close()
-      self.log("DBG: Token written")
-      self.sendResponse(True, "no error", message)
+            self.log("DBG: Writing token...")
+            tokenFile = open('E:\.gpii-user-token.txt', 'w+')
+            tokenFile.write(json.dumps(userToken).strip('"'))
+            tokenFile.close()
+            self.log("DBG: Token written")
+            self.sendResponse(True, "no error", message)
 
-    except IOError as e:
-      self.log("ERROR: Error writing to file. Do you have access to E:?")
-      self.sendResponse(False, "FileIO Error",  message)
+        except IOError as e:
+            self.log("ERROR: Error writing to file. Do you have access to E:?")
+            self.sendResponse(False, "FileIO Error",  message, e)
 
-  #Set isLogging to True to enable
-  def log(self, message):
-    if isLogging == True:
-      with open(logPath, 'a') as logFile:
-        logFile.write(strftime(
-          "%Y-%m-%d %H:%M:%S", gmtime()) + " " + message + "\n")
+    # Set isLogging to True to enable
+    def log(self, message):
+        # if isLogging == True:
+        if isLogging is True:
+            with open(logPath, 'a') as logFile:
+                logFile.write(strftime(
+                    "%Y-%m-%d %H:%M:%S", gmtime()) + " " + message + "\n")
+
 
 def Main():
-  queue = Queue.Queue()
-  thread = threading.Thread(target=read_thread_func, args=(queue,))
-  thread.daemon = True
-  thread.start()
+    queue = Queue.Queue()
+    thread = threading.Thread(target=read_thread_func, args=(queue,))
+    thread.daemon = True
+    thread.start()
 
-  messager = NativeMessagingWindow(queue)
-  sys.exit(0)
+    NativeMessenger(queue)
+    sys.exit(0)
 
 if __name__ == '__main__':
-  Main()
+    Main()
