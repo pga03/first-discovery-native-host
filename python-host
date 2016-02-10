@@ -10,6 +10,7 @@ from time import gmtime, strftime
 import time
 from os.path import expanduser
 
+usbDriveLetter = "E:"
 isLogging = False
 isTesting = False
 home = expanduser("~")
@@ -139,16 +140,16 @@ class NativeMessenger():
             send_message(json.dumps(response))
 
     def writeFileAndRespond(self, preferences, userToken, message):
-        self.log("DBG: Attempting to write to E:")
+        self.log("DBG: Attempting to write to " + usbDriveLetter)
         try:
             self.log("DBG: Writing preferences...")
-            prefsFile = open('E:\.first-discovery-preferences.txt', 'w+')
+            prefsFile = open(usbDriveLetter + '\.first-discovery-preferences.txt', 'w+')
             prefsFile.write(json.dumps(preferences))
             prefsFile.close()
             self.log("DBG: Preferences written")
 
             self.log("DBG: Writing token...")
-            tokenFile = open('E:\.gpii-user-token.txt', 'w+')
+            tokenFile = open(usbDriveLetter + '\.gpii-user-token.txt', 'w+')
             tokenFile.write(json.dumps(userToken).strip('"'))
             tokenFile.close()
             self.log("DBG: Token written")
@@ -157,7 +158,7 @@ class NativeMessenger():
                 self.sendResponse(True, "no error", message)
 
         except IOError as e:
-            self.log("ERROR: Error writing to file. Do you have access to E:?")
+            self.log("ERROR: Error writing to file. Do you have access?")
             self.sendResponse(False, "FileIO Error",  message, e)
 
     # Set isLogging to True to enable
