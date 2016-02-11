@@ -4,6 +4,6 @@
   "path": "python-host.bat",
   "type": "stdio",
   "allowed_origins": [
-    "chrome-extension://fojfkfdnipccdhhjakieojkglomfaloe/"
+    "chrome-extension://nfigeegnfaapacjlfjllbhdkgolabheo/"
   ]
 }
