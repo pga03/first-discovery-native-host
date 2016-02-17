@@ -159,7 +159,7 @@ class NativeMessenger():
 
         except IOError as e:
             self.log("ERROR: Error writing to file. Do you have access?")
-            self.sendResponse(False, "FileIO Error",  message, e)
+            self.sendResponse(False, "FileIO Error: " + str(e),  message)
 
     # Set isLogging to True to enable
     def log(self, message):
