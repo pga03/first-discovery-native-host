@@ -61,6 +61,9 @@ This assumes a USB key will be mounted at the `E:\ drive`. Edit `python-host` an
 as needed. You might need to edit this if you have additional disc drives, disks, or network drives
 mapped on your machine.
 
+**NOTE:** If the native host isn't given a valid USB drive, it will revert to using the first available
+drive it can find (searching alphabetically starting at `D:\`)
+
 #####Registry setting
 The registry entry used is located at `HKCU\Software\Google\Chrome\NativeMessagingHosts`  
 
