@@ -26,7 +26,7 @@ def try_another_drive():
         drives = ['%s:' % d for d in dl if os.path.exists('%s:' % d)]
 
         # If we can find an alternative drive, use it and return true
-        if drives[0] is not None:
+        if drives:
             global usbDriveLetter
             usbDriveLetter = drives[0]
             return True
@@ -132,17 +132,15 @@ class NativeMessenger():
 
         response = json.loads(responseSkeleton)
 
-        # if isSuccessful == True:
-        if isSuccessful is True:
-            response["is_successful"] = "true"
-
-        # if isSuccessful == False:
-        if isSuccessful is False:
-            response["is_successful"] = "false"
-
         response["original_message"] = json.loads(message)
         response["error"]["code"] = '00000'
         response["error"]["message"] = errorMessage
+
+        if isSuccessful is False:
+            response["is_successful"] = "false"
+
+        if isSuccessful is True:
+            response["is_successful"] = "true"
 
         self.log("DBG: MESSAGE TO RESPOND WITH:")
         self.log(json.dumps(response))
@@ -177,6 +175,7 @@ class NativeMessenger():
             if hasAltDrive is True:
                 self.writeFileAndRespond(preferences, userToken, message)
             else:
+                self.log(str(e))
                 self.sendResponse(False, "FileIO Error: " + str(e),  message)
 
     # Set isLogging to True to enable
@@ -279,25 +278,24 @@ def tests():
         os.remove(usbDriveLetter + '\.gpii-user-token.txt')
 
     tempPrefs = testMessage["message_body"]["preferences"]
-    messenger.writeFileAndRespond(tempPrefs, "unitTest", testMessage)
+    messenger.writeFileAndRespond(tempPrefs, "unitTest", json.dumps(testMessage))
 
-    prefsFile = open(usbDriveLetter + '\.first-discovery-preferences.txt', 'r').read()
-    tokenFile = open(usbDriveLetter + '\.gpii-user-token.txt').read()
+    if os.path.exists(usbDriveLetter):
+        prefsFile = open(usbDriveLetter + '\.first-discovery-preferences.txt', 'r').read()
+        tokenFile = open(usbDriveLetter + '\.gpii-user-token.txt').read()
+        # Compare values we want with values we get
+        if prefsFile != goodPrefsFile or tokenFile != 'unitTest':
+            print("FAILURE: Files not correctly written")
+            testSuccess = False
+        else:
+            print("SUCCESS: Files properly written to " + usbDriveLetter)
 
-    # Compare values we want with values we get
-    if prefsFile != goodPrefsFile:
-        print("FAILURE: Prefs file not correctly written")
-        testSuccess = False
-    if tokenFile != 'unitTest':
-        print("FAILURE: Token file not correctly written")
-        testSuccess = False
+        if testSuccess is False:
+            print("FAILURE: UNIT TESTS FAILED")
+        if testSuccess is True:
+            print("SUCCESS: ALL TESTS RUN SUCCESSFULLY!")
     else:
-        print("SUCCESS: Files properly written")
-
-    if testSuccess is False:
-        print("FAILURE: UNIT TESTS FAILED")
-    if testSuccess is True:
-        print("SUCCESS: ALL TESTS RUN SUCCESSFULLY!")
+        print("FAILURE: No USB device available")
 
 
 def Main():
