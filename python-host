@@ -24,11 +24,15 @@ def try_another_drive():
         # List of drive letters. Note the absence of A, B and C
         dl = "DEFGHIJKLMNOPQRSTUVWXYZ"
         drives = ['%s:' % d for d in dl if os.path.exists('%s:' % d)]
-        global usbDriveLetter
-        usbDriveLetter = drives[0]
-        return True
-    else:
-        return False
+
+        # If we can find an alternative drive, use it and return true
+        if drives[0] is not None:
+            global usbDriveLetter
+            usbDriveLetter = drives[0]
+            return True
+
+    # If we can't find another drive...
+    return False
 
 # Check for 'test' command line arg
 for arg in sys.argv:
