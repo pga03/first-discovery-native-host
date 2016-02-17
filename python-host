@@ -16,6 +16,20 @@ isTesting = False
 home = expanduser("~")
 logPath = home + '\pythonLog.txt'
 
+
+# A quick way to attempt using another drive
+# Returns true if another drive can be attempted
+def try_another_drive():
+    if not os.path.exists(usbDriveLetter):
+        # List of drive letters. Note the absence of A, B and C
+        dl = "DEFGHIJKLMNOPQRSTUVWXYZ"
+        drives = ['%s:' % d for d in dl if os.path.exists('%s:' % d)]
+        global usbDriveLetter
+        usbDriveLetter = drives[0]
+        return True
+    else:
+        return False
+
 # Check for 'test' command line arg
 for arg in sys.argv:
     if arg == "test":
@@ -51,15 +65,10 @@ def read_thread_func(queue):
 
         if queue:
             queue.put(text)
-        # else:
-        #     # In headless mode just send an echo message back.
-        #     send_message('{"echo": %s}' % text)
 
 
 # Helper to send response to extension
 def send_message(message):
-    # if isTesting is True:
-    #     return
     # Write message size.
     sys.stdout.write(struct.pack('I', len(message)))
     # Write the message itself.
@@ -157,9 +166,14 @@ class NativeMessenger():
             if isTesting is False:
                 self.sendResponse(True, "no error", message)
 
+        # If the USB path is invalid, attempt to use another drive
         except IOError as e:
             self.log("ERROR: Error writing to file. Do you have access?")
-            self.sendResponse(False, "FileIO Error",  message, e)
+            hasAltDrive = try_another_drive()
+            if hasAltDrive is True:
+                self.writeFileAndRespond(preferences, userToken, message)
+            else:
+                self.sendResponse(False, "FileIO Error: " + str(e),  message)
 
     # Set isLogging to True to enable
     def log(self, message):
@@ -247,7 +261,11 @@ def tests():
 
     # Check if paths are available
     if not os.path.exists(usbDriveLetter):
-        print("FAILURE: usb Drive wasn't found!")
+        print("FAILURE:"
+              " USB Drive wasn't found! The host will now attempt to use "
+              "\n\t another drive. Check if the the token and preferences "
+              "\n\t were written to your USB drive. The next test will check "
+              "\n\t if the files were written.")
         testSuccess = False
     if os.path.exists(usbDriveLetter + '\.first-discovery-preferences.txt'):
         print("INFO: preferences file exists. Deleting it...")
