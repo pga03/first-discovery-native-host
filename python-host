@@ -20,6 +20,7 @@ logPath = home + '\pythonLog.txt'
 # A quick way to attempt using another drive
 # Returns true if another drive can be attempted
 def try_another_drive():
+    global usbDriveLetter
     if not os.path.exists(usbDriveLetter):
         # List of drive letters. Note the absence of A, B and C
         dl = "DEFGHIJKLMNOPQRSTUVWXYZ"
@@ -27,7 +28,6 @@ def try_another_drive():
 
         # If we can find an alternative drive, use it and return true
         if drives:
-            global usbDriveLetter
             usbDriveLetter = drives[0]
             return True
 
